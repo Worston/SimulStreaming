@@ -51,9 +51,17 @@ class LLMTranslator:
         return [{'role':'system', 'content': self.system_prompt }]
 
     def build_prompt(self, dialog):
-        toks = self.tokenizer.apply_chat_template(dialog, tokenize=True, add_generation_prompt=False)
         if len(dialog) == 3:
-            toks = toks[:-2]
+            # Build prompt with system + user + generation prompt (assistant turn marker),
+            # then append the forced assistant content tokens.
+            # This avoids the fragile toks[:-2] hack that only worked for EuroLLM-9B.
+            base_toks = self.tokenizer.apply_chat_template(dialog[:2], tokenize=True, add_generation_prompt=True)
+            forced_toks = self.tokenizer.encode(dialog[2]['content'], add_special_tokens=False)
+            toks = base_toks + forced_toks
+        else:
+            # 2-message dialog (system + user): add_generation_prompt=True adds
+            # the assistant turn marker so the model knows to start generating.
+            toks = self.tokenizer.apply_chat_template(dialog, tokenize=True, add_generation_prompt=True)
         print("len toks:", len(toks), file=sys.stderr)
 
         c = self.tokenizer.convert_ids_to_tokens(toks)
