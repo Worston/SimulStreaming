@@ -507,7 +507,7 @@ The name SimulStreaming also aims to be understandable and used by two communiti
 
 **ELITR**:
 
-SimulStreaming is one of follow up projects of [ELITR](https://elitr.eu) (European Live Translator, 2019-2022). It is designed as one of the tools in a complex distributed pipeline for long-form monologue speech transcription and translation between many languages (ref. to papers: [1](https://aclanthology.org/2020.iwltp-1.7/),[2](https://aclanthology.org/2021.mtsummit-asltrw.3/),[3](https://aclanthology.org/2021.eacl-demos.32/)). The other tools usable in such pipelines, as well as in other projects, are e.g. [Pipeliner](https://github.com/ELITR/pipeliner), [MT-wrapper](https://github.com/ELITR/mt-wrapper/), a front-end web application [online-text-flow](https://github.com/ELITR/online-text-flow), and a tool for [ASR latency evaluation](github.com/ufal/asr_latency).
+SimulStreaming is one of follow up projects of [ELITR](https://elitr.eu) (European Live Translator, 2019-2022). It is designed as one of the tools in a complex distributed pipeline for long-form monologue speech transcription and translation between many languages (ref. to papers: [1](https://aclanthology.org/2020.iwltp-1.7/),[2](https://aclanthology.org/2021.mtsummit-asltrw.3/),[3](https://aclanthology.org/2021.eacl-demos.32/)). The other tools usable in such pipelines, as well as in other projects, are e.g. [Pipeliner](https://github.com/ELITR/pipeliner), [MT-wrapper](https://github.com/ELITR/mt-wrapper/), a front-end web application [online-text-flow](https://github.com/ELITR/online-text-flow), or a tool for [ASR latency evaluation](github.com/ufal/asr_latency).
 
 ## 📣 Feedback Welcome!
 
@@ -526,7 +526,7 @@ MIT.
 
 Contributions welcome. 
 
-A remarkable contribution project that integrates SimulStreaming is [WhispeLiveKit](https://github.com/QuentinFuxa/WhisperLiveKit).
+A remarkable contribution project that integrates SimulStreaming is [WhisperLiveKit](https://github.com/QuentinFuxa/WhisperLiveKit).
 
 ## ✉️ Contact
 
