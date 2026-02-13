@@ -121,7 +121,18 @@ class HFWhisperASR:
         if self.forced_decoder_ids is not None:
             gen_kwargs["forced_decoder_ids"] = self.forced_decoder_ids
         if self.prompt_ids is not None:
-            gen_kwargs["prompt_ids"] = self.prompt_ids
+            # transformers Whisper generation expects prompt_ids to be a torch.Tensor
+            # (and will torch.cat() it with decoder_input_ids). Some tokenizers return
+            # numpy arrays here, so normalize to a batched LongTensor on the right device.
+            prompt_ids = self.torch.as_tensor(self.prompt_ids, dtype=self.torch.long, device=self.device)
+            if prompt_ids.ndim == 1:
+                prompt_ids = prompt_ids.unsqueeze(0)
+            elif prompt_ids.ndim > 2:
+                prompt_ids = prompt_ids.reshape(1, -1)
+            batch_size = int(input_features.shape[0])
+            if prompt_ids.shape[0] != batch_size:
+                prompt_ids = prompt_ids.repeat(batch_size, 1)
+            gen_kwargs["prompt_ids"] = prompt_ids
 
         with self.torch.no_grad():
             predicted_ids = self.model.generate(input_features, **gen_kwargs)
