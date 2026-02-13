@@ -1,19 +1,29 @@
 from simulstreaming.whisper.whisper_streaming.base import OnlineProcessorInterface, ASRBase
 import argparse
 
+import os
+
 import sys
 import logging
 import torch
 
 from simulstreaming.whisper.simul_whisper.config import AlignAttConfig
 from simulstreaming.whisper.simul_whisper.simul_whisper import PaddedAlignAttWhisper
+from simulstreaming.whisper.hf_whisper_backend import HFWhisperASR, HFWhisperOnline, is_hf_whisper_dir
 
 logger = logging.getLogger(__name__)
 
 def simulwhisper_args(parser):
     group = parser.add_argument_group('Whisper arguments')
-    group.add_argument('--model_path', type=str, default='./large-v3.pt', 
-                        help='The file path to the Whisper .pt model. If not present on the filesystem, the model is downloaded automatically.')
+    group.add_argument(
+        '--model_path',
+        type=str,
+        default='./large-v3.pt',
+        help=(
+            'Model source. Either (A) a Whisper OpenAI-format .pt file/name, or (B) a HuggingFace Whisper model directory '
+            '(must contain config.json + pytorch_model.bin/model.safetensors).'
+        ),
+    )
     group.add_argument("--beams","-b", type=int, default=1, help="Number of beams for beam search decoding. If 1, GreedyDecoder is used.")
     group.add_argument("--decoder",type=str, default=None, help="Override automatic selection of beam or greedy decoder. "
                         "If beams > 1 and greedy: invalid.")
@@ -78,6 +88,20 @@ def simul_asr_factory(args):
     if args.audio_min_len > args.audio_max_len:
         raise ValueError("audio_min_len must be smaller than audio_max_len")
     logger.info(f"Arguments: {a}")
+    # If model_path points to a HuggingFace directory, use the HF backend (no .pt conversion).
+    if is_hf_whisper_dir(args.model_path):
+        logger.info(f"Detected HuggingFace Whisper directory: {args.model_path}")
+        hf_asr = HFWhisperASR(
+            language=args.lan,
+            model_path=args.model_path,
+            beams=args.beams,
+            task=args.task,
+            audio_min_len=args.audio_min_len,
+            init_prompt=args.init_prompt,
+            static_init_prompt=args.static_init_prompt,
+        )
+        return hf_asr, HFWhisperOnline(hf_asr)
+
     asr = SimulWhisperASR(**a)
     return asr, SimulWhisperOnline(asr)
 
