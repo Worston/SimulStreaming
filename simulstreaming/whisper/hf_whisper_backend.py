@@ -3,6 +3,7 @@ import logging
 from typing import Optional, Tuple, List
 
 import numpy as np
+import copy
 
 
 logger = logging.getLogger(__name__)
@@ -118,8 +119,18 @@ class HFWhisperASR:
             "do_sample": False,
             "max_new_tokens": self._generate_max_new_tokens(seconds),
         }
+        generation_config = None
         if self.forced_decoder_ids is not None:
-            gen_kwargs["forced_decoder_ids"] = self.forced_decoder_ids
+            # Newer transformers validate generate() kwargs strictly; for Whisper,
+            # forced_decoder_ids should be provided via GenerationConfig.
+            try:
+                base_cfg = getattr(self.model, "generation_config", None)
+                if base_cfg is not None:
+                    generation_config = base_cfg.clone() if hasattr(base_cfg, "clone") else copy.deepcopy(base_cfg)
+                    setattr(generation_config, "forced_decoder_ids", self.forced_decoder_ids)
+            except Exception as e:
+                logger.warning(f"Could not set forced_decoder_ids in generation_config: {e}")
+                generation_config = None
         if self.prompt_ids is not None:
             # transformers Whisper generation expects prompt_ids to be a torch.Tensor
             # (and will torch.cat() it with decoder_input_ids). Some tokenizers return
@@ -129,7 +140,10 @@ class HFWhisperASR:
             gen_kwargs["prompt_ids"] = prompt_ids
 
         with self.torch.no_grad():
-            predicted_ids = self.model.generate(input_features, **gen_kwargs)
+            if generation_config is not None:
+                predicted_ids = self.model.generate(input_features, generation_config=generation_config, **gen_kwargs)
+            else:
+                predicted_ids = self.model.generate(input_features, **gen_kwargs)
 
         token_ids = predicted_ids[0].tolist()
         text = self.processor.batch_decode(predicted_ids, skip_special_tokens=True)[0]
